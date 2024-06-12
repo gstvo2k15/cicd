@@ -30,14 +30,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
       - name: Lint code
         run: |
           pip install pylint
           pylint $(git ls-files '*.py')
 
       - name: Run tests
-        run: |
-          python -m unittest discover -s tests
+        run: python -m unittest discover -s tests
 
   deploy_aws:
     if: github.event.inputs.cloud-provider == 'aws'
