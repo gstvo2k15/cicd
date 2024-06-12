@@ -81,7 +81,7 @@ El archivo .github/workflows/ci-cd.yml ya está configurado para ejecutar el pip
 
 ### 7. Ejecución del Pipeline
 
-Ve a la página de acciones de tu repositorio en GitHub.
+Ve a la página de Actions de tu repositorio en GitHub.
 Selecciona el flujo de trabajo CI/CD Pipeline.
 Haz clic en Run workflow.
 Selecciona el proveedor de nube (aws, azure, gcp) en el parámetro cloud-provider.

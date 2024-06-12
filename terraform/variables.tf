@@ -1,4 +1,10 @@
-# terraform/variables.tf
+variable "project" {
+  description = "The project ID to deploy to"
+  type        = string
+}
+
 variable "region" {
-  default = "us-west-2"
+  description = "The region to deploy resources in"
+  type        = string
+  default     = "us-central1"
 }
