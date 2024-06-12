@@ -1,0 +1,32 @@
+# ansible/playbook.yml
+- hosts: app_server
+  become: yes
+  tasks:
+    - name: Actualizar e instalar dependencias
+      apt:
+        update_cache: yes
+        name: python3-pip
+        state: present
+
+    - name: Instalar Flask
+      pip:
+        name: flask
+
+    - name: Copiar aplicación
+      copy:
+        src: ../app/main.py
+        dest: /home/ubuntu/main.py
+
+    - name: Ejecutar aplicación
+      shell: python3 /home/ubuntu/main.py
+      async: 0
+      poll: 0
+      register: app
+
+    - name: Esperar a que la aplicación se inicie
+      async_status:
+        jid: "{{ app.ansible_job_id }}"
+      register: job_result
+      until: job_result.finished
+      retries: 30
+      delay: 10

@@ -1,0 +1,106 @@
+name: CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloud-provider:
+        description: 'Choose the cloud provider'
+        required: true
+        default: 'aws'
+        type: choice
+        options:
+          - aws
+          - azure
+          - gcp
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Lint code
+        run: flake8 .
+
+      - name: Run tests
+        run: python -m unittest discover -s tests
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        provider: [aws, azure, gcp]
+        include:
+          - provider: aws
+            terraform_dir: ./terraform/aws
+            region_var: region
+            init: terraform init
+            apply: terraform apply -auto-approve
+            output: echo "::set-output name=ip::$(cat ./terraform/aws/ip_address.txt)"
+          - provider: azure
+            terraform_dir: ./terraform/azure
+            region_var: location
+            init: terraform init
+            apply: terraform apply -auto-approve
+            output: echo "::set-output name=ip::$(cat ./terraform/azure/ip_address.txt)"
+          - provider: gcp
+            terraform_dir: ./terraform/gcp
+            region_var: region
+            init: terraform init
+            apply: terraform apply -auto-approve
+            output: echo "::set-output name=ip::$(cat ./terraform/gcp/ip_address.txt)"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        if: matrix.provider == github.event.inputs.cloud-provider
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        if: matrix.provider == github.event.inputs.cloud-provider
+        run: ${{ matrix.init }}
+        working-directory: ${{ matrix.terraform_dir }}
+
+      - name: Terraform Apply
+        if: matrix.provider == github.event.inputs.cloud-provider
+        run: ${{ matrix.apply }}
+        working-directory: ${{ matrix.terraform_dir }}
+
+      - name: Extract IP
+        if: matrix.provider == github.event.inputs.cloud-provider
+        id: extract_ip
+        run: ${{ matrix.output }}
+
+      - name: Create Ansible inventory file
+        if: matrix.provider == github.event.inputs.cloud-provider
+        run: |
+          echo "[app_server]" > ansible/inventory
+          echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
+
+      - name: Setup SSH
+        if: matrix.provider == github.event.inputs.cloud-provider
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run Ansible playbook
+        if: matrix.provider == github.event.inputs.cloud-provider
+        uses: ansible/ansible-runner-action@v2
+        with:
+          inventory: ansible/inventory
+          playbook: ansible/playbook.yml
