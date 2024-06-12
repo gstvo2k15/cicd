@@ -4,7 +4,7 @@ Este proyecto demuestra cómo configurar un pipeline de CI/CD para desplegar una
 
 
 ## Estructura del Proyecto
-
+```
 cicd/
 ├── .github/
 │ └── workflows/
@@ -29,7 +29,7 @@ cicd/
 ├── .flake8
 ├── requirements.txt
 └── README.md
-
+```
 
 
 ## Prerrequisitos
