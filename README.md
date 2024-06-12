@@ -51,7 +51,7 @@ git clone https://github.com/tu_usuario/cicd.git
 
 ### 2. Configurar los secretos en GitHub
 Ve a la configuración del repositorio en GitHub y añade los siguientes secretos:
-
+```
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 AZURE_SUBSCRIPTION_ID
@@ -61,7 +61,7 @@ AZURE_TENANT_ID
 GCP_PROJECT_ID
 GCP_CREDENTIALS (contenido del archivo JSON de credenciales)
 SSH_PRIVATE_KEY (clave privada SSH)
-
+```
 
 ### 3. Configuración de la Aplicación Web
 
@@ -91,16 +91,16 @@ Detalles del Flujo de Trabajo
 El flujo de trabajo realiza las siguientes acciones:
 
 - Test:
-
+```
   · Clona el repositorio.
   · Configura Python.
   · Instala las dependencias.
   · Ejecuta Flake8 para linting.
   · Ejecuta las pruebas unitarias.
-
+```
 
 - Deploy:
-
+```
   · Configura Terraform para el proveedor de nube seleccionado.
   · Inicializa Terraform.
   · Aplica la configuración de Terraform para crear la infraestructura.
@@ -108,15 +108,15 @@ El flujo de trabajo realiza las siguientes acciones:
   · Genera dinámicamente el archivo de inventario de Ansible.
   · Configura SSH.
   · Ejecuta el playbook de Ansible para desplegar la aplicación web.
+```
 
 
-
-### Notas
+## Notas
 Asegúrate de tener configuradas las credenciales necesarias para cada proveedor de nube.
 Puedes ampliar y personalizar la configuración de Terraform y Ansible según tus necesidades.
 
 El pipeline está diseñado para ser flexible y permite elegir el proveedor de nube en tiempo de ejecución.
 
 
-### Contribuciones
+## Contribuciones
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para mejoras y correcciones.
