@@ -1,3 +1,7 @@
+"""
+This module contains the test cases for the main application.
+"""
+
 import unittest
 from app.main import app
 
