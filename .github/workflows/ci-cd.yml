@@ -3,6 +3,15 @@ name: CI/CD Pipeline
 on:
   workflow_dispatch:
     inputs:
+      language:
+        description: 'Choose the programming language'
+        required: true
+        default: 'python'
+        type: choice
+        options:
+          - python
+          - javascript
+          - java
       cloud-provider:
         description: 'Choose the cloud provider'
         required: true
@@ -16,28 +25,74 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [python, javascript, java]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Python
+        if: matrix.language == 'python'
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
+        if: matrix.language == 'python'
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r app/python/requirements.txt
 
-      - name: Lint code
+      - name: Lint Python code
+        if: matrix.language == 'python'
         run: |
           pip install pylint
-          pylint $(git ls-files '*.py')
+          pylint app/python/*.py
 
-      - name: Run tests
+      - name: Run Python tests
+        if: matrix.language == 'python'
         run: |
-          python -m unittest discover -s tests
+          python -m unittest discover -s app/python/tests
+
+      - name: Set up Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install JavaScript dependencies
+        if: matrix.language == 'javascript'
+        run: npm install
+        working-directory: app/javascript
+
+      - name: Lint JavaScript code
+        if: matrix.language == 'javascript'
+        run: npm run lint
+        working-directory: app/javascript
+
+      - name: Run JavaScript tests
+        if: matrix.language == 'javascript'
+        run: npm test
+        working-directory: app/javascript
+
+      - name: Set up JDK
+        if: matrix.language == 'java'
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Build Java project
+        if: matrix.language == 'java'
+        run: mvn clean package
+        working-directory: app/java
+
+      - name: Run Java tests
+        if: matrix.language == 'java'
+        run: mvn test
+        working-directory: app/java
 
   deploy:
     needs: test

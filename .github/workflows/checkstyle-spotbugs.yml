@@ -1,0 +1,26 @@
+name: Checkstyle and SpotBugs
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: '11'
+
+    - name: Build and analyze with Checkstyle
+      run: |
+        mvn checkstyle:check
+      working-directory: app/java
+
+    - name: Build and analyze with SpotBugs
+      run: |
+        mvn compile com.github.spotbugs:spotbugs-maven-plugin:check
+      working-directory: app/java
