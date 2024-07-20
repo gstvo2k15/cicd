@@ -1,6 +1,14 @@
 name: Pylint
 
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: 'Python version'
+        required: true
+        default: '3.8'
+        type: choice
+        options: ['3.8', '3.9', '3.10']
 
 jobs:
   build:

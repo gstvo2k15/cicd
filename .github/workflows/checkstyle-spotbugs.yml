@@ -1,6 +1,14 @@
 name: Checkstyle and SpotBugs
 
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      java-version:
+        description: 'Java version'
+        required: true
+        default: '11'
+        type: choice
+        options: ['11', '17']
 
 jobs:
   lint:
@@ -13,7 +21,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '11'
+        java-version: ${{ github.event.inputs['java-version'] }}
 
     - name: Build and analyze with Checkstyle
       run: |

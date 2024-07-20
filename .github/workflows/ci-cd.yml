@@ -34,63 +34,63 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Python
-        if: matrix.language == 'python'
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
       - name: Install Python dependencies
-        if: matrix.language == 'python'
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
         run: |
           python -m pip install --upgrade pip
           pip install -r app/python/requirements.txt
 
       - name: Lint Python code
-        if: matrix.language == 'python'
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
         run: |
           pip install pylint
           pylint app/python/*.py
 
       - name: Run Python tests
-        if: matrix.language == 'python'
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
         run: |
           python -m unittest discover -s app/python/tests
 
       - name: Set up Node.js
-        if: matrix.language == 'javascript'
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
       - name: Install JavaScript dependencies
-        if: matrix.language == 'javascript'
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         run: npm install
         working-directory: app/javascript
 
       - name: Lint JavaScript code
-        if: matrix.language == 'javascript'
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         run: npm run lint
         working-directory: app/javascript
 
       - name: Run JavaScript tests
-        if: matrix.language == 'javascript'
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         run: npm test
         working-directory: app/javascript
 
       - name: Set up JDK
-        if: matrix.language == 'java'
+        if: matrix.language == 'java' && github.event.inputs.language == 'java'
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '11'
 
       - name: Build Java project
-        if: matrix.language == 'java'
+        if: matrix.language == 'java' && github.event.inputs.language == 'java'
         run: mvn clean package
         working-directory: app/java
 
       - name: Run Java tests
-        if: matrix.language == 'java'
+        if: matrix.language == 'java' && github.event.inputs.language == 'java'
         run: mvn test
         working-directory: app/java
 
