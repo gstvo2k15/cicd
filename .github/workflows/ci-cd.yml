@@ -15,7 +15,7 @@ on:
       cloud-provider:
         description: 'Choose the cloud provider'
         required: true
-        default: 'aws'
+        default: 'azure'
         type: choice
         options:
           - aws
@@ -118,21 +118,29 @@ jobs:
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/aws/ip_address.txt)"
-            secrets: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
+            env:
+              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           - provider: azure
             terraform_dir: ./terraform/azure
             region_var: location
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/azure/ip_address.txt)"
-            secrets: [AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID]
+            env:
+              ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+              ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+              ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+              ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           - provider: gcp
             terraform_dir: ./terraform/gcp
             region_var: region
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/gcp/ip_address.txt)"
-            secrets: [GCP_CREDENTIALS, GCP_PROJECT_ID]
+            env:
+              GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+              GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
 
     steps:
       - name: Checkout code
@@ -145,15 +153,18 @@ jobs:
           path: ./build
 
       - name: Set up Terraform
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Terraform Init
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: ${{ matrix.init }}
         working-directory: ${{ matrix.terraform_dir }}
 
       - name: Terraform Apply
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: ${{ matrix.apply }}
         working-directory: ${{ matrix.terraform_dir }}
         env:
@@ -167,21 +178,27 @@ jobs:
           GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Extract IP
+        if: matrix.provider == github.event.inputs.cloud-provider
         id: extract_ip
         run: ${{ matrix.output }}
 
       - name: Create Ansible inventory file
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: |
           echo "[app_server]" > ansible/inventory
           echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
 
       - name: Setup SSH
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Run Ansible playbook
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: ansible/ansible-runner-action@v2
         with:
           inventory: ansible/inventory
           playbook: ansible/playbook.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
