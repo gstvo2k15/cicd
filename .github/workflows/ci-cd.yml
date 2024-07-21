@@ -33,6 +33,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Python setup and test
       - name: Set up Python
         if: matrix.language == 'python' && github.event.inputs.language == 'python'
         uses: actions/setup-python@v2
@@ -58,6 +59,7 @@ jobs:
         run: |
           python -m unittest discover -s app/python/tests
 
+      # JavaScript setup and test
       - name: Set up Node.js
         if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         uses: actions/setup-node@v2
@@ -79,6 +81,7 @@ jobs:
         run: npm test
         working-directory: app/javascript
 
+      # Java setup and test
       - name: Set up JDK
         if: matrix.language == 'java' && github.event.inputs.language == 'java'
         uses: actions/setup-java@v2
@@ -97,6 +100,7 @@ jobs:
         working-directory: app/java
 
       - name: Upload Build Artifact
+        if: matrix.language == github.event.inputs.language
         uses: actions/upload-artifact@v2
         with:
           name: build-artifact
