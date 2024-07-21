@@ -94,6 +94,15 @@ jobs:
         run: mvn test
         working-directory: app/java
 
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: |
+            app/python/**/*       # For Python
+            app/javascript/**/*   # For JavaScript
+            app/java/target/**/*  # For Java
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -134,6 +143,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifact
+          path: ./build
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
