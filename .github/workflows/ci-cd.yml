@@ -59,6 +59,13 @@ jobs:
         run: |
           python -m unittest discover -s app/python/tests
 
+      - name: Upload Python Build Artifact
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-build-artifact
+          path: app/python/**/*
+
       # JavaScript setup and test
       - name: Set up Node.js
         if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
@@ -81,6 +88,13 @@ jobs:
         run: npm test
         working-directory: app/javascript
 
+      - name: Upload JavaScript Build Artifact
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
+        uses: actions/upload-artifact@v2
+        with:
+          name: javascript-build-artifact
+          path: app/javascript/**/*
+
       # Java setup and test
       - name: Set up JDK
         if: matrix.language == 'java' && github.event.inputs.language == 'java'
@@ -99,27 +113,12 @@ jobs:
         run: mvn test
         working-directory: app/java
 
-      - name: List files before uploading (Python)
-        if: matrix.language == 'python' && github.event.inputs.language == 'python'
-        run: ls -R app/python/ || true
-
-      - name: List files before uploading (JavaScript)
-        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
-        run: ls -R app/javascript/ || true
-
-      - name: List files before uploading (Java)
+      - name: Upload Java Build Artifact
         if: matrix.language == 'java' && github.event.inputs.language == 'java'
-        run: ls -R app/java/target/ || true
-        
-      - name: Upload Build Artifact
-        if: matrix.language == github.event.inputs.language
         uses: actions/upload-artifact@v2
         with:
-          name: build-artifact
-          path: |
-            app/python/**/*       # For Python
-            app/javascript/**/*   # For JavaScript
-            app/java/target/**/*  # For Java
+          name: java-build-artifact
+          path: app/java/target/**/*
 
   deploy_aws:
     needs: test
@@ -132,7 +131,7 @@ jobs:
       - name: Download Build Artifact
         uses: actions/download-artifact@v2
         with:
-          name: build-artifact
+          name: ${{ github.event.inputs.language }}-build-artifact
           path: ./build
 
       - name: Set up Terraform
@@ -181,7 +180,7 @@ jobs:
       - name: Download Build Artifact
         uses: actions/download-artifact@v2
         with:
-          name: build-artifact
+          name: ${{ github.event.inputs.language }}-build-artifact
           path: ./build
 
       - name: Set up Terraform
@@ -232,7 +231,7 @@ jobs:
       - name: Download Build Artifact
         uses: actions/download-artifact@v2
         with:
-          name: build-artifact
+          name: ${{ github.event.inputs.language }}-build-artifact
           path: ./build
 
       - name: Set up Terraform
