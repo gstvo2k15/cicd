@@ -2,7 +2,7 @@ import sys
 import os
 import unittest
 
-# Verificar que el directorio 'app/python' esté en sys.path
+# Asegúrate de que el directorio 'app/python' esté en sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from main import app

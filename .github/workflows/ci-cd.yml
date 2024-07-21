@@ -53,6 +53,8 @@ jobs:
 
       - name: Run Python tests
         if: matrix.language == 'python' && github.event.inputs.language == 'python'
+        env:
+          PYTHONPATH: app/python
         run: |
           python -m unittest discover -s app/python/tests
 
