@@ -15,7 +15,7 @@ on:
       cloud-provider:
         description: 'Choose the cloud provider'
         required: true
-        default: 'aws'
+        default: 'azure'
         type: choice
         options:
           - aws
