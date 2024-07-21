@@ -15,7 +15,7 @@ on:
       cloud-provider:
         description: 'Choose the cloud provider'
         required: true
-        default: 'azure'
+        default: 'aws'
         type: choice
         options:
           - aws
@@ -118,29 +118,18 @@ jobs:
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/aws/ip_address.txt)"
-            env:
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           - provider: azure
             terraform_dir: ./terraform/azure
             region_var: location
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/azure/ip_address.txt)"
-            env:
-              ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-              ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-              ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-              ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           - provider: gcp
             terraform_dir: ./terraform/gcp
             region_var: region
             init: terraform init
             apply: terraform apply -auto-approve
             output: echo "::set-output name=ip::$(cat ./terraform/gcp/ip_address.txt)"
-            env:
-              GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-              GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
 
     steps:
       - name: Checkout code
@@ -200,5 +189,3 @@ jobs:
         with:
           inventory: ansible/inventory
           playbook: ansible/playbook.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
