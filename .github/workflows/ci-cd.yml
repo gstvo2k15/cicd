@@ -99,13 +99,16 @@ jobs:
         run: mvn test
         working-directory: app/java
 
-      - name: List files before uploading
+      - name: List files before uploading (Python)
+        if: matrix.language == 'python' && github.event.inputs.language == 'python'
         run: ls -R app/python/ || true
 
-      - name: List files before uploading
+      - name: List files before uploading (JavaScript)
+        if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         run: ls -R app/javascript/ || true
 
-      - name: List files before uploading
+      - name: List files before uploading (Java)
+        if: matrix.language == 'java' && github.event.inputs.language == 'java'
         run: ls -R app/java/target/ || true
 
       - name: Upload Build Artifact
