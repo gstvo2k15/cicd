@@ -15,7 +15,7 @@ on:
       cloud-provider:
         description: 'Choose the cloud provider'
         required: true
-        default: 'aws'
+        default: 'azure'
         type: choice
         options:
           - aws
@@ -145,15 +145,18 @@ jobs:
           path: ./build
 
       - name: Set up Terraform
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Terraform Init
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: ${{ matrix.init }}
         working-directory: ${{ matrix.terraform_dir }}
 
       - name: Terraform Apply
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: ${{ matrix.apply }}
         working-directory: ${{ matrix.terraform_dir }}
         env:
@@ -167,20 +170,24 @@ jobs:
           GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Extract IP
+        if: matrix.provider == github.event.inputs.cloud-provider
         id: extract_ip
         run: ${{ matrix.output }}
 
       - name: Create Ansible inventory file
+        if: matrix.provider == github.event.inputs.cloud-provider
         run: |
           echo "[app_server]" > ansible/inventory
           echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
 
       - name: Setup SSH
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Run Ansible playbook
+        if: matrix.provider == github.event.inputs.cloud-provider
         uses: ansible/ansible-runner-action@v2
         with:
           inventory: ansible/inventory
