@@ -105,32 +105,10 @@ jobs:
             app/javascript/**/*   # For JavaScript
             app/java/target/**/*  # For Java
 
-  deploy:
+  deploy_aws:
     needs: test
+    if: github.event.inputs.cloud-provider == 'aws'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        provider: [aws, azure, gcp]
-        include:
-          - provider: aws
-            terraform_dir: ./terraform/aws
-            region_var: region
-            init: terraform init
-            apply: terraform apply -auto-approve
-            output: echo "::set-output name=ip::$(cat ./terraform/aws/ip_address.txt)"
-          - provider: azure
-            terraform_dir: ./terraform/azure
-            region_var: location
-            init: terraform init
-            apply: terraform apply -auto-approve
-            output: echo "::set-output name=ip::$(cat ./terraform/azure/ip_address.txt)"
-          - provider: gcp
-            terraform_dir: ./terraform/gcp
-            region_var: region
-            init: terraform init
-            apply: terraform apply -auto-approve
-            output: echo "::set-output name=ip::$(cat ./terraform/gcp/ip_address.txt)"
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -142,50 +120,136 @@ jobs:
           path: ./build
 
       - name: Set up Terraform
-        if: matrix.provider == github.event.inputs.cloud-provider
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Terraform Init
-        if: matrix.provider == github.event.inputs.cloud-provider
-        run: ${{ matrix.init }}
-        working-directory: ${{ matrix.terraform_dir }}
+        run: terraform init
+        working-directory: ./terraform/aws
 
       - name: Terraform Apply
-        if: matrix.provider == github.event.inputs.cloud-provider
-        run: ${{ matrix.apply }}
-        working-directory: ${{ matrix.terraform_dir }}
+        run: terraform apply -auto-approve
+        working-directory: ./terraform/aws
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-          GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Extract IP
-        if: matrix.provider == github.event.inputs.cloud-provider
         id: extract_ip
-        run: ${{ matrix.output }}
+        run: echo "::set-output name=ip::$(cat ./terraform/aws/ip_address.txt)"
 
       - name: Create Ansible inventory file
-        if: matrix.provider == github.event.inputs.cloud-provider
         run: |
           echo "[app_server]" > ansible/inventory
           echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
 
       - name: Setup SSH
-        if: matrix.provider == github.event.inputs.cloud-provider
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Run Ansible playbook
-        if: matrix.provider == github.event.inputs.cloud-provider
-        uses: ansible/ansible-runner-action@v2
+        run: ansible-playbook -i ansible/inventory ansible/playbook.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+
+  deploy_azure:
+    needs: test
+    if: github.event.inputs.cloud-provider == 'azure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
         with:
-          inventory: ansible/inventory
-          playbook: ansible/playbook.yml
+          name: build-artifact
+          path: ./build
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform/azure
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform/azure
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Extract IP
+        id: extract_ip
+        run: echo "::set-output name=ip::$(cat ./terraform/azure/ip_address.txt)"
+
+      - name: Create Ansible inventory file
+        run: |
+          echo "[app_server]" > ansible/inventory
+          echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run Ansible playbook
+        run: ansible-playbook -i ansible/inventory ansible/playbook.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+
+  deploy_gcp:
+    needs: test
+    if: github.event.inputs.cloud-provider == 'gcp'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifact
+          path: ./build
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform/gcp
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform/gcp
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          GOOGLE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Extract IP
+        id: extract_ip
+        run: echo "::set-output name=ip::$(cat ./terraform/gcp/ip_address.txt)"
+
+      - name: Create Ansible inventory file
+        run: |
+          echo "[app_server]" > ansible/inventory
+          echo "app_server ansible_host=${{ steps.extract_ip.outputs.ip }}" >> ansible/inventory
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run Ansible playbook
+        run: ansible-playbook -i ansible/inventory ansible/playbook.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
