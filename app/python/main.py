@@ -1,3 +1,7 @@
+"""
+A simple Flask web server.
+"""
+
 from flask import Flask
 
 app = Flask(__name__)
