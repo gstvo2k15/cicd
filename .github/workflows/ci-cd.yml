@@ -4,18 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       language:
-        description: 'Choose the programming language'
+        description: "Choose the programming language"
         required: true
-        default: 'python'
+        default: "python"
         type: choice
         options:
           - python
           - javascript
           - java
       cloud-provider:
-        description: 'Choose the cloud provider'
+        description: "Choose the cloud provider"
         required: true
-        default: 'azure'
+        default: "azure"
         type: choice
         options:
           - aws
@@ -38,7 +38,7 @@ jobs:
         if: matrix.language == 'python' && github.event.inputs.language == 'python'
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install Python dependencies
         if: matrix.language == 'python' && github.event.inputs.language == 'python'
@@ -71,7 +71,7 @@ jobs:
         if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: "14"
 
       - name: Install JavaScript dependencies
         if: matrix.language == 'javascript' && github.event.inputs.language == 'javascript'
@@ -100,8 +100,8 @@ jobs:
         if: matrix.language == 'java' && github.event.inputs.language == 'java'
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
-          java-version: '11'
+          distribution: "adopt"
+          java-version: "11"
 
       - name: Build Java project
         if: matrix.language == 'java' && github.event.inputs.language == 'java'
@@ -196,6 +196,7 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform/azure
         env:
+          TF_LOG: DEBUG
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
